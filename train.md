@@ -100,5 +100,74 @@ fi
 
 ---
 
-أنا ممكن أزود عليه كمان أوبشن يخليه يحط الباسورد لليوزر أوتوماتيك
-تحب أعمل ده في النسخة الجاية؟
+========================================================================================================================================
+
+تمام فهمت انت عايز تضيف **for loop** بحيث تنفذ نفس التشيك والإنشاء لأكتر من يوزر أو جروب مرة واحدة
+
+هظبطلك الكود اللي فوق عشان يقبل **قائمة يوزرات** وتعملهم نفس الخطوات
+
+---
+
+## الكود بـ for
+
+```bash
+#!/bin/bash
+
+# Colors
+GREEN="\e[32m"
+RED="\e[31m"
+YELLOW="\e[33m"
+RESET="\e[0m"
+
+# Read input
+read -p "Enter group name: " group
+read -p "Enter user shell (e.g. /bin/bash): " usershell
+read -p "Enter usernames (space separated): " usernames
+
+# 1. Check if group exists, if not create it
+if ! getent group "$group" &>/dev/null; then
+    echo -e "${YELLOW}Group '$group' does not exist. Creating it...${RESET}"
+    if sudo groupadd "$group"; then
+        echo -e "${GREEN}Group '$group' created successfully.${RESET}"
+    else
+        echo -e "${RED}Failed to create group '$group'.${RESET}"
+        exit 1
+    fi
+fi
+
+# 2. Loop for each username
+for username in $usernames; do
+    # Check if username is empty
+    if [ -z "$username" ]; then
+        echo -e "${RED}Username can't be empty. Skipping...${RESET}"
+        continue
+    fi
+
+    # Check if user exists
+    if id "$username" &>/dev/null; then
+        echo -e "${RED}User '$username' already exists. Skipping...${RESET}"
+        continue
+    fi
+
+    # Create the user
+    if sudo useradd -m -c "$username" -g "$group" -s "$usershell" "$username"; then
+        echo -e "${GREEN}User '$username' created successfully in group '$group'.${RESET}"
+    else
+        echo -e "${RED}Failed to create user '$username'.${RESET}"
+    fi
+done
+```
+
+---
+
+### الفكرة:
+
+* بتكتب الجروب والشل مرة واحدة
+* بتكتب كل أسماء اليوزرات مفصولة بمسافات
+* الـ `for` هيمر على كل اسم ويعمل نفس التشكيك والإنشاء
+
+---
+
+لو عايز ممكن أعملها كمان بحيث كل يوزر ياخد باسورد تلقائي ويتكتب في ملف عشان تعرفه بعدين.
+تحب أظبطه بالطريقة دي؟
+
